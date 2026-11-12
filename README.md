@@ -1,6 +1,6 @@
 # Česká typografie pro Affinity
 
-**TypoSkript pro Affinity:** jednoznakové předložky, nedělitelné mezery a česká typografie v Affinity Publisher, Designer a Photo (Affinity by Canva).
+**TypoSkript pro Affinity:** jednoznakové předložky, nedělitelné mezery a česká typografie v novém Affinity od Canvy (aplikace, která spojila Publisher, Designer a Photo).
 
 Skript pro nové [Affinity od Canvy](https://www.affinity.studio/), který jedním kliknutím opraví českou hladkou sazbu. Funguje v sazbě (Layout), ve vektorech i v pixelech, protože Affinity má skriptování společné pro celou aplikaci.
 
