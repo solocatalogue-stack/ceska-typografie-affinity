@@ -17,6 +17,11 @@
   v datech, u titulů, iniciál a zkratek; české uvozovky; pomlčky; výpustku;
   nadbytečné mezery. Formátování textu zůstává zachováno.
   Vše se provede jako jeden krok, takže jde vrátit přes Cmd+Z.
+
+  Instalace: soubor uložte do složky povolené v Settings › Scripting › File System
+  Access, ve Script Editoru vytvořte nový skript s jediným řádkem
+    require('/cela/cesta/k/CeskaTypografie.js').main();
+  a v ozubeném kolečku vedle Run zaškrtněte File System. Podrobně v README.
 */
 
 // Affinity načítá moduly jen na nejvyšší úrovni skriptu (uvnitř funkce
