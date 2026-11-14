@@ -1,12 +1,18 @@
 # Česká typografie pro Affinity
 
-**TypoSkript pro Affinity:** jednoznakové předložky, nedělitelné mezery a česká typografie v Affinity Publisher, Designer a Photo (Affinity by Canva).
+**TypoSkript pro Affinity:** jednoznakové předložky, nedělitelné mezery a česká typografie v novém Affinity od Canvy (aplikace, která spojila Publisher, Designer a Photo).
 
-Skript pro [Affinity](https://www.affinity.studio/) (verze 3.3 a novější), který jedním kliknutím opraví českou hladkou sazbu. Funguje v sazbě (Layout), ve vektorech i v pixelech, protože Affinity má skriptování společné pro celou aplikaci.
+Skript pro nové [Affinity od Canvy](https://www.affinity.studio/), který jedním kliknutím opraví českou hladkou sazbu. Funguje v sazbě (Layout), ve vektorech i v pixelech, protože Affinity má skriptování společné pro celou aplikaci.
 
 **Inspirace:** skript vznikl podle vzoru [TypoSkriptu](https://typoskript.cz/) Františka Erbena, oblíbeného nástroje pro opravu české sazby v Adobe InDesign (a jeho předchůdce Viktor Čistič). TypoSkript pro InDesign najdete na [typoskript.erben.work](https://typoskript.erben.work/), [aktuální verzi ke stažení](https://typoskript.erben.work/aktualni-verze/) a [nápovědu](https://typoskript.erben.work/napoveda/) tamtéž.
 
 **Celý kód je napsaný znovu, od nuly.** Z TypoSkriptu se nepřevzal ani nepřeložil žádný kód. Pravidla vycházejí z normy ČSN 01 6910 a z běžných zásad české typografie. Tento projekt není s TypoSkriptem ani s jeho autorem nijak spojený.
+
+## Pro jakou verzi Affinity
+
+- **Funguje v:** Affinity od Canvy (jedna aplikace, zdarma), **verze 3.3 a novější** (od září 2026). Skriptování v Affinity přibylo právě ve verzi 3.3.
+- **Nefunguje v:** starších samostatných aplikacích Affinity Publisher, Designer a Photo (verze 1 a 2). Ty skripty nepodporují.
+- Číslo **1.0** je verze tohoto skriptu, ne verze Affinity.
 
 ## Co skript opravuje
 
@@ -56,7 +62,7 @@ node tests/test.js
 
 ## English
 
-A script for Affinity 3.3+ that fixes Czech typography in one click: non-breaking spaces after one-letter prepositions and conjunctions, between numbers and units, in dates, titles, initials and abbreviations; Czech quotes; dashes; ellipsis; extra spaces. It is inspired by [TypoSkript](https://typoskript.cz/) for Adobe InDesign by František Erben, but every line was written from scratch; no TypoSkript code was used. Issues and pull requests are welcome.
+A script for the new Affinity by Canva, version 3.3 or later (it does not work in the old Affinity V1/V2 apps, which have no scripting), that fixes Czech typography in one click: non-breaking spaces after one-letter prepositions and conjunctions, between numbers and units, in dates, titles, initials and abbreviations; Czech quotes; dashes; ellipsis; extra spaces. It is inspired by [TypoSkript](https://typoskript.cz/) for Adobe InDesign by František Erben, but every line was written from scratch; no TypoSkript code was used. Issues and pull requests are welcome.
 
 ## Licence
 
