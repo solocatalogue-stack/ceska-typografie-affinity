@@ -558,8 +558,10 @@ function main() {
     alert(msg);
 }
 
+// Spuštění ze Script Editoru (stejně jako ukázkové skripty Affinity):
+// require('/Users/…/CeskaTypografie.js').main();
+if (typeof module !== 'undefined') module.exports.main = main;
+
 if (typeof globalThis !== 'undefined' && globalThis.__CZTYPO_TEST__) {
     globalThis.__CZTYPO__ = { fixParagraph, fixText, computeEdits, diff, DEFAULTS };
-} else {
-    main();
 }
