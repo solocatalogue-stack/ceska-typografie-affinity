@@ -19,6 +19,14 @@
   Vše se provede jako jeden krok, takže jde vrátit přes Cmd+Z.
 */
 
+// Affinity načítá moduly jen na nejvyšší úrovni skriptu (uvnitř funkce
+// není require k dispozici), proto jsou tady nahoře.
+const { Document } = require('/document.js');
+const { Dialog, DialogResult } = require('/dialog.js');
+const { CompoundCommandBuilder, DocumentCommand } = require('/commands.js');
+const { Selection, TextSelection } = require('/selections.js');
+const { StoryDelta } = require('/storydelta.js');
+
 const NB = '\u00A0';          // nedělitelná mezera
 const OBJ = '\uFFFC';         // zástupný znak pro pole, kotvy apod.
 
@@ -389,11 +397,6 @@ function fixText(text, opts) {
 // ---------------------------------------------------------------------------
 
 function main() {
-    const { Document } = require('/document.js');
-    const { Dialog, DialogResult } = require('/dialog.js');
-    const { CompoundCommandBuilder, DocumentCommand } = require('/commands.js');
-    const { Selection, TextSelection } = require('/selections.js');
-    const { StoryDelta } = require('/storydelta.js');
 
     const doc = Document.current;
     if (!doc) {
