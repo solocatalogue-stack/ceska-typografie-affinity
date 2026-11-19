@@ -17,10 +17,23 @@
   v datech, u titulů, iniciál a zkratek; české uvozovky; pomlčky; výpustku;
   nadbytečné mezery. Formátování textu zůstává zachováno.
   Vše se provede jako jeden krok, takže jde vrátit přes Cmd+Z.
+
+  Instalace: soubor uložte do složky povolené v Settings › Scripting › File System
+  Access, ve Script Editoru vytvořte nový skript s jediným řádkem
+    require('/cela/cesta/k/CeskaTypografie.js').main();
+  a v ozubeném kolečku vedle Run zaškrtněte File System. Podrobně v README.
 */
 
-const NB = ' ';          // nedělitelná mezera
-const OBJ = '￼';         // zástupný znak pro pole, kotvy apod.
+// Affinity načítá moduly jen na nejvyšší úrovni skriptu (uvnitř funkce
+// není require k dispozici), proto jsou tady nahoře.
+const { Document } = require('/document.js');
+const { Dialog, DialogResult } = require('/dialog.js');
+const { CompoundCommandBuilder, DocumentCommand } = require('/commands.js');
+const { Selection, TextSelection } = require('/selections.js');
+const { StoryDelta } = require('/storydelta.js');
+
+const NB = '\u00A0';          // nedělitelná mezera
+const OBJ = '\uFFFC';         // zástupný znak pro pole, kotvy apod.
 
 // ---------------------------------------------------------------------------
 // Pravidla
@@ -112,7 +125,7 @@ const TITLES_AFTER = [
 
 function fixQuotes(s) {
     // dvojité
-    const isOpenCtx = (prev) => prev === '' || /[\s (\[{\-–—\/„‚￼]/.test(prev);
+    const isOpenCtx = (prev) => prev === '' || /[\s\u00A0(\[{\-–—\/„‚\uFFFC]/.test(prev);
     let out = '';
     for (let i = 0; i < s.length; i++) {
         const c = s[i];
@@ -149,7 +162,7 @@ function fixQuotes(s) {
 // Opraví text jednoho odstavce. Nikdy nepřidává ani neubírá konce odstavců.
 function fixParagraph(s, o) {
     if (o.normalizeSpaces)
-        s = s.replace(/[           ]/g, ' ');
+        s = s.replace(/[\u00A0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F]/g, ' ');
 
     if (o.extraTabs) {
         s = s.replace(/\t{2,}/g, '\t');
@@ -160,9 +173,9 @@ function fixParagraph(s, o) {
         s = fixQuotes(s);
 
     if (o.extraSpaces) {
-        s = s.replace(/[  ]{2,}/g, m => (m.indexOf(NB) >= 0 ? NB : ' '));
-        s = s.replace(/^[  ]+/, '');
-        s = s.replace(/[  \t]+$/, '');
+        s = s.replace(/[ \u00A0]{2,}/g, m => (m.indexOf(NB) >= 0 ? NB : ' '));
+        s = s.replace(/^[ \u00A0]+/, '');
+        s = s.replace(/[ \u00A0\t]+$/, '');
         const closers = o.quotes ? '.,;!?)\\]}“‘' : '.,;!?)\\]}';
         s = s.replace(new RegExp('[ \\u00A0]+([' + closers + '])', 'g'), (m, p, off, str) => {
             // ponechat „ .“ u výpustky a mezery u „ – “ nejsou dotčeny
@@ -170,8 +183,8 @@ function fixParagraph(s, o) {
             return p;
         });
         // dvojtečka: mezeru ponecháme u poměrů a skóre (1 : 2)
-        s = s.replace(/(\S)[  ]+:(?![  ]?\d)/g, '$1:');
-        s = s.replace(/([(\[{„‚])[  ]+/g, '$1');
+        s = s.replace(/(\S)[ \u00A0]+:(?![ \u00A0]?\d)/g, '$1:');
+        s = s.replace(/([(\[{„‚])[ \u00A0]+/g, '$1');
     }
 
     if (o.general) {
@@ -179,7 +192,7 @@ function fixParagraph(s, o) {
         s = s.replace(/\.{3,}/g, '…');
         s = s.replace(/\. \. \./g, '…');
         // data 1.1.2025 → 1. 1. 2025
-        s = s.replace(/(^|[^\d.,])(\d{1,2})\.[  ]?(\d{1,2})\.[  ]?(\d{4})(?![\d.,]\d)/g,
+        s = s.replace(/(^|[^\d.,])(\d{1,2})\.[ \u00A0]?(\d{1,2})\.[ \u00A0]?(\d{4})(?![\d.,]\d)/g,
             (m, b, d, mo, y) => {
                 const di = +d, mi = +mo;
                 if (di < 1 || di > 31 || mi < 1 || mi > 12) return m;
@@ -189,40 +202,40 @@ function fixParagraph(s, o) {
         s = s.replace(new RegExp('(^|[^\\d])(\\d{1,2})\\.[ \\u00A0]?(' + alt(MONTHS) + ')(?![\\p{L}])', 'gu'),
             (m, b, d, mon) => b + d + '.' + NB + mon);
         // rozsahy čísel a letopočtů: 10 - 15, 1999-2001 → pomlčka
-        s = s.replace(/(^|[^\d\-–.,\/])(\d{1,4})[  ]*[-–][  ]*(\d{1,4})(?![\d\-–\/]|[.,]\d)/g,
+        s = s.replace(/(^|[^\d\-–.,\/])(\d{1,4})[ \u00A0]*[-–][ \u00A0]*(\d{1,4})(?![\d\-–\/]|[.,]\d)/g,
             (m, b, a1, a2) => b + a1 + '–' + a2);
         // dvě spojovníky → pomlčka
         s = s.replace(/(^|[^-])--(?!-)/g, '$1–');
         // pomlčka mezi slovy: „slovo - slovo“ → „slovo␣– slovo“
-        s = s.replace(/(\S)[  ]+[-–—][  ]+(?=\S)/g, '$1' + NB + '– ');
+        s = s.replace(/(\S)[ \u00A0]+[-–—][ \u00A0]+(?=\S)/g, '$1' + NB + '– ');
         // iniciály: J. Novák, J. R. R. Tolkien
-        s = loopReplace(s, /(^|[\s („‚\-–])(\p{Lu})\.[ ](?=\p{Lu})/gu, (m, b, l) => b + l + '.' + NB);
+        s = loopReplace(s, /(^|[\s\u00A0(„‚\-–])(\p{Lu})\.[ ](?=\p{Lu})/gu, (m, b, l) => b + l + '.' + NB);
         // násobení 3 x 4 → 3 × 4
-        s = s.replace(/(\d)[  ]?[x×][  ]?(\d)/g, '$1' + NB + '×' + NB + '$2');
+        s = s.replace(/(\d)[ \u00A0]?[x×][ \u00A0]?(\d)/g, '$1' + NB + '×' + NB + '$2');
     }
 
     if (o.abbreviations) {
         const ABBR = [
-            [/s\.[  ]?r\.[  ]?o\./g, 's.' + NB + 'r.' + NB + 'o.'],
-            [/spol\.[  ]?s[  ]?r\.[  ]?o\./g, 'spol.' + NB + 's' + NB + 'r.' + NB + 'o.'],
-            [/v\.[  ]?o\.[  ]?s\./g, 'v.' + NB + 'o.' + NB + 's.'],
-            [/o\.[  ]?p\.[  ]?s\./g, 'o.' + NB + 'p.' + NB + 's.'],
-            [/př\.[  ]?n\.[  ]?l\./g, 'př.' + NB + 'n.' + NB + 'l.'],
-            [/a\.[  ]?s\.(?!\p{L})/gu, 'a.' + NB + 's.'],
-            [/k\.[  ]?s\.(?!\p{L})/gu, 'k.' + NB + 's.'],
-            [/z\.[  ]?s\.(?!\p{L})/gu, 'z.' + NB + 's.'],
-            [/z\.[  ]?ú\./g, 'z.' + NB + 'ú.'],
-            [/s\.[  ]?p\.(?!\p{L})/gu, 's.' + NB + 'p.'],
-            [/č\.[  ]?p\./g, 'č.' + NB + 'p.'],
-            [/č\.[  ]?j\./g, 'č.' + NB + 'j.'],
-            [/č\.[  ]?ú\./g, 'č.' + NB + 'ú.'],
-            [/n\.[  ]?l\./g, 'n.' + NB + 'l.'],
-            [/t\.[  ]?č\./g, 't.' + NB + 'č.'],
-            [/t\.[  ]?r\./g, 't.' + NB + 'r.'],
-            [/t\.[  ]?j\./g, 'tj.'],
-            [/a\.[  ]?j\./g, 'aj.'],
-            [/Ph\.[  ]?D\./g, 'Ph.D.'],
-            [/Th\.[  ]?D\./g, 'Th.D.']
+            [/s\.[ \u00A0]?r\.[ \u00A0]?o\./g, 's.' + NB + 'r.' + NB + 'o.'],
+            [/spol\.[ \u00A0]?s[ \u00A0]?r\.[ \u00A0]?o\./g, 'spol.' + NB + 's' + NB + 'r.' + NB + 'o.'],
+            [/v\.[ \u00A0]?o\.[ \u00A0]?s\./g, 'v.' + NB + 'o.' + NB + 's.'],
+            [/o\.[ \u00A0]?p\.[ \u00A0]?s\./g, 'o.' + NB + 'p.' + NB + 's.'],
+            [/př\.[ \u00A0]?n\.[ \u00A0]?l\./g, 'př.' + NB + 'n.' + NB + 'l.'],
+            [/a\.[ \u00A0]?s\.(?!\p{L})/gu, 'a.' + NB + 's.'],
+            [/k\.[ \u00A0]?s\.(?!\p{L})/gu, 'k.' + NB + 's.'],
+            [/z\.[ \u00A0]?s\.(?!\p{L})/gu, 'z.' + NB + 's.'],
+            [/z\.[ \u00A0]?ú\./g, 'z.' + NB + 'ú.'],
+            [/s\.[ \u00A0]?p\.(?!\p{L})/gu, 's.' + NB + 'p.'],
+            [/č\.[ \u00A0]?p\./g, 'č.' + NB + 'p.'],
+            [/č\.[ \u00A0]?j\./g, 'č.' + NB + 'j.'],
+            [/č\.[ \u00A0]?ú\./g, 'č.' + NB + 'ú.'],
+            [/n\.[ \u00A0]?l\./g, 'n.' + NB + 'l.'],
+            [/t\.[ \u00A0]?č\./g, 't.' + NB + 'č.'],
+            [/t\.[ \u00A0]?r\./g, 't.' + NB + 'r.'],
+            [/t\.[ \u00A0]?j\./g, 'tj.'],
+            [/a\.[ \u00A0]?j\./g, 'aj.'],
+            [/Ph\.[ \u00A0]?D\./g, 'Ph.D.'],
+            [/Th\.[ \u00A0]?D\./g, 'Th.D.']
         ];
         for (const [re, rep] of ABBR) {
             const src = '(^|[^\\p{L}])(?:' + re.source + ')';
@@ -236,7 +249,7 @@ function fixParagraph(s, o) {
         // uvnitř víceslovných titulů
         s = s.replace(/(Ing\.|akad\.|brig\.|št\.)[ ](arch\.|mal\.|soch\.|gen\.|prap\.)/g, '$1' + NB + '$2');
         s = s.replace(new RegExp(',[ ](' + alt(TITLES_AFTER) + ')(?![\\p{L}])', 'gu'), ',' + NB + '$1');
-        s = s.replace(/dr\.[  ]?h\.[  ]?c\./gi, m => m[0] + 'r.' + NB + 'h.' + NB + 'c.');
+        s = s.replace(/dr\.[ \u00A0]?h\.[ \u00A0]?c\./gi, m => m[0] + 'r.' + NB + 'h.' + NB + 'c.');
     }
 
     if (o.units) {
@@ -260,7 +273,7 @@ function fixParagraph(s, o) {
     }
 
     if (o.ordinals)
-        s = s.replace(/(\d)[  ](st|nd|rd|th)(?![\p{L}])/gu, '$1$2');
+        s = s.replace(/(\d)[ \u00A0](st|nd|rd|th)(?![\p{L}])/gu, '$1$2');
 
     return s;
 }
@@ -339,7 +352,7 @@ function diff(a, b) {
     return hunks.map(h => ({ begin: h.begin + pre, end: h.end + pre, text: h.text }));
 }
 
-const URL_RE = /(?:https?:\/\/|s?ftps?:\/\/|www\.)[^\s ￼]+|[\p{L}\p{N}._%+\-]+@[\p{L}\p{N}\-]+(?:\.[\p{L}\p{N}\-]+)+/gu;
+const URL_RE = /(?:https?:\/\/|s?ftps?:\/\/|www\.)[^\s\u00A0\uFFFC]+|[\p{L}\p{N}._%+\-]+@[\p{L}\p{N}\-]+(?:\.[\p{L}\p{N}\-]+)+/gu;
 
 // Spočítá všechny opravy pro text celého článku.
 function computeEdits(text, opts) {
@@ -389,11 +402,6 @@ function fixText(text, opts) {
 // ---------------------------------------------------------------------------
 
 function main() {
-    const { Document } = require('/document.js');
-    const { Dialog, DialogResult } = require('/dialog.js');
-    const { CompoundCommandBuilder, DocumentCommand } = require('/commands.js');
-    const { Selection, TextSelection } = require('/selections.js');
-    const { StoryDelta } = require('/storydelta.js');
 
     const doc = Document.current;
     if (!doc) {
@@ -507,9 +515,11 @@ function main() {
         return true;
     }
 
-    let changed = 0, stories = 0, skipped = 0;
-    const builder = CompoundCommandBuilder.create();
-    let cmdCount = 0;
+    let skipped = 0;
+    // Úpravy po článcích, seskupené podle dvojstrany. Affinity zapíše text
+    // spolehlivě jen na aktuální dvojstraně, proto ji před zápisem přepínáme.
+    const groups = new Map();   // klíč dvojstrany -> { spread, items: [...] }
+    let order = 0;
 
     for (const node of targets) {
         let story;
@@ -525,38 +535,101 @@ function main() {
                 if (editsMatch(story, r.edits)) result = r;
             }
         } catch (e) { result = null; }
-        if (!result) result = computeEdits(storyTextExact(story), opts);
+        if (!result) {
+            try { result = computeEdits(storyTextExact(story), opts); }
+            catch (e) { skipped++; continue; }
+        }
 
         const { edits, noBreak } = result;
         if (!edits.length && !noBreak.length) continue;
 
+        const cmds = [];
         for (let i = edits.length - 1; i >= 0; i--) {
             const e = edits[i];
-            builder.addCommand(DocumentCommand.createSetText(textSel(node, e.begin, e.end), e.text));
-            cmdCount++;
+            cmds.push(() => DocumentCommand.createSetText(textSel(node, e.begin, e.end), e.text));
         }
-        for (const r of noBreak) {
-            builder.addCommand(DocumentCommand.createFormatText(textSel(node, r.begin, r.end), StoryDelta.createIsNoBreak(true)));
-            cmdCount++;
+        for (const r of noBreak)
+            cmds.push(() => DocumentCommand.createFormatText(textSel(node, r.begin, r.end), StoryDelta.createIsNoBreak(true)));
+
+        let spread = null;
+        try { spread = node.spread; } catch (e) { spread = null; }
+        let key = null;
+        if (spread) {
+            for (const [k, g] of groups) {
+                try { if (g.spread && g.spread.isSameNode(spread)) { key = k; break; } } catch (e) { /* další */ }
+            }
         }
-        changed += edits.length;
-        if (edits.length) stories++;
+        if (key === null) { key = order++; groups.set(key, { spread, items: [] }); }
+        groups.get(key).items.push({ cmds, edits: edits.length, total: edits.length + noBreak.length });
     }
 
-    if (!cmdCount) {
-        alert('Hotovo. Nebylo co opravit.');
+    if (!groups.size) {
+        alert(skipped ? 'Nebylo co opravit. Přeskočeno (tabulky apod.): ' + skipped + '.' : 'Hotovo. Nebylo co opravit.');
         return;
     }
-    doc.executeCommand(builder.createCommand());
 
+    let originalSpread = null;
+    try { originalSpread = doc.currentSpread; } catch (e) { /* ignorovat */ }
+
+    const setSpread = (spread) => DocumentCommand.createSetCurrentSpread(spread);
+    const tryRun = (cmd) => {
+        try { const r = doc.executeCommand(cmd); return r !== false; }
+        catch (e) { return false; }
+    };
+    const compound = (parts) => {
+        const b = CompoundCommandBuilder.create();
+        for (const c of parts) b.addCommand(c);
+        return b.createCommand();
+    };
+
+    let changed = 0, stories = 0, failed = 0, steps = 0;
+    const all = [...groups.values()];
+
+    // 1) Všechno najednou = jeden krok zpět.
+    const parts = [];
+    for (const g of all) {
+        if (g.spread) parts.push(setSpread(g.spread));
+        for (const it of g.items) for (const mk of it.cmds) parts.push(mk());
+    }
+    if (tryRun(compound(parts))) {
+        for (const g of all) for (const it of g.items) { changed += it.edits; if (it.total) stories++; }
+        steps = 1;
+    } else {
+        // 2) Po dvojstranách, a když ani to nejde, po jednotlivých článcích.
+        for (const g of all) {
+            if (g.spread) tryRun(setSpread(g.spread));
+            const cmds = [];
+            for (const it of g.items) for (const mk of it.cmds) cmds.push(mk());
+            if (tryRun(compound(cmds))) {
+                steps++;
+                for (const it of g.items) { changed += it.edits; if (it.total) stories++; }
+                continue;
+            }
+            for (const it of g.items) {
+                if (tryRun(compound(it.cmds.map(mk => mk())))) {
+                    steps++; changed += it.edits; if (it.total) stories++;
+                } else failed++;
+            }
+        }
+    }
+
+    if (originalSpread) tryRun(setSpread(originalSpread));
+
+    if (!stories && failed) {
+        alert('Affinity úpravy nepřijalo (texty: ' + failed + '). Zkus vybrat jeden textový rámeček a zvolit Vybrané texty. Pokud to nepomůže, napiš prosím do issues na GitHubu.');
+        return;
+    }
     let msg = 'Hotovo. Opraveno míst: ' + changed + ' (texty: ' + stories + ').';
     if (skipped) msg += '\nPřeskočeno (tabulky apod.): ' + skipped + '.';
-    msg += '\nVše vrátíš jedním Cmd+Z.';
+    if (failed) msg += '\nNepodařilo se upravit textů: ' + failed + '.';
+    msg += steps === 1 ? '\nVše vrátíš jedním Cmd+Z.' : '\nVrátit jde přes Cmd+Z (kroků: ' + steps + ').';
     alert(msg);
 }
 
+// Spuštění ze Script Editoru (stejně jako ukázkové skripty Affinity):
+// require('/Users/…/CeskaTypografie.js').main();
+if (typeof module !== 'undefined') module.exports.main = main;
+
 if (typeof globalThis !== 'undefined' && globalThis.__CZTYPO_TEST__) {
     globalThis.__CZTYPO__ = { fixParagraph, fixText, computeEdits, diff, DEFAULTS };
-} else {
-    main();
 }

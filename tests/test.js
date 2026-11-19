@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm');
 const src=fs.readFileSync(require("path").join(__dirname,"..","CeskaTypografie.js"),'utf8');
-const ctx={__CZTYPO_TEST__:true}; ctx.globalThis=ctx; vm.createContext(ctx); vm.runInContext(src,ctx);
+const ctx={__CZTYPO_TEST__:true,require:()=>({})}; ctx.globalThis=ctx; vm.createContext(ctx); vm.runInContext(src,ctx);
 const {fixText,computeEdits}=ctx.__CZTYPO__;
 const show=s=>s.replace(/ /g,'␣');
 const cases=[

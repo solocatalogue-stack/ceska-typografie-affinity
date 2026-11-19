@@ -37,15 +37,31 @@ Skript mění jen opravované znaky, takže formátování textu (písmo, veliko
 
 ## Instalace
 
-1. V Affinity otevřete **Affinity › Settings › Scripting** a zapněte **Enable Affinity Scripting**.
-2. Stáhněte soubor [`CeskaTypografie.js`](CeskaTypografie.js), otevřete ho v textovém editoru, označte vše (Cmd+A) a zkopírujte (Cmd+C).
-3. V Affinity: **Window › Scripting › Script Editor › New Script**. Vložte kód a dejte **Save As**. Pojmenujte ho třeba „Česká typografie“.
+Skript se nevkládá do Affinity celý. Uložíte ho jako soubor a Affinity ho načítá jedním řádkem. Když pak vyjde nová verze, stačí soubor přepsat.
+
+1. Stáhněte [`CeskaTypografie.js`](CeskaTypografie.js) a uložte ho do vlastní složky, třeba **Dokumenty › Affinity skripty**.
+2. V Affinity otevřete **Affinity › Settings › Scripting**. Zapněte **Enable Affinity Scripting** a dole u **File System Access** klikněte na **Add** a vyberte tu složku.
+3. Otevřete **Window › Scripting › Script Editor** a klikněte na **New Script**.
+4. Vložte do editoru tento jeden řádek a cestu nahraďte cestou ke svému souboru:
+
+   ```
+   require('/Users/vase-jmeno/Documents/Affinity skripty/CeskaTypografie.js').main();
+   ```
+
+   Přesnou cestu zjistíte ve Finderu: klikněte na soubor pravým tlačítkem, podržte klávesu Option a zvolte **Zkopírovat „CeskaTypografie.js“ jako cestu**.
+5. Klikněte na ozubené kolečko vedle tlačítka **Run** a zaškrtněte **File System**. Bez toho skript soubor nenačte a nic se nestane.
+6. Dejte **Save As** a pojmenujte skript třeba „Česká typografie“. Objeví se v panelu **Scripts Library**.
 
 ## Použití
 
-Vyberte textové rámečky, které chcete opravit (nebo nic, pro celý dokument), a klikněte na skript v panelu **Scripts Library**. V dialogu zvolte rozsah a pravidla a potvrďte OK.
+1. Vyberte textové rámečky, které chcete opravit. Pokud nevyberete nic, opraví se celý dokument.
+2. V panelu **Scripts Library** klikněte na skript pravým tlačítkem a zvolte **Run Script**.
+3. V dialogu zvolte rozsah (**Celý dokument** nebo **Vybrané texty**) a pravidla a potvrďte **OK**.
+4. Skript nakonec napíše, kolik míst opravil. Všechno vrátíte jedním Cmd+Z.
 
 Žádný automat nenahradí typografa, proto si prosím výsledek projděte.
+
+**Když se nic nestane:** otevřete v panelu skriptů kartu **Running Scripts › View Log**. Hláška „Failed to resolve module“ znamená, že chybí složka v bodě 2 nebo zaškrtnutí **File System** v bodě 5.
 
 ## Jak navrhnout úpravu
 
@@ -62,7 +78,7 @@ node tests/test.js
 
 ## English
 
-A script for the new Affinity by Canva, version 3.3 or later (it does not work in the old Affinity V1/V2 apps, which have no scripting), that fixes Czech typography in one click: non-breaking spaces after one-letter prepositions and conjunctions, between numbers and units, in dates, titles, initials and abbreviations; Czech quotes; dashes; ellipsis; extra spaces. It is inspired by [TypoSkript](https://typoskript.cz/) for Adobe InDesign by František Erben, but every line was written from scratch; no TypoSkript code was used. Issues and pull requests are welcome.
+A script for the new Affinity by Canva, version 3.3 or later (it does not work in the old Affinity V1/V2 apps, which have no scripting), that fixes Czech typography in one click: non-breaking spaces after one-letter prepositions and conjunctions, between numbers and units, in dates, titles, initials and abbreviations; Czech quotes; dashes; ellipsis; extra spaces. It is inspired by [TypoSkript](https://typoskript.cz/) for Adobe InDesign by František Erben, but every line was written from scratch; no TypoSkript code was used. Install: save the file, allow its folder in Settings › Scripting › File System Access, create a new script with the single line `require('/full/path/CeskaTypografie.js').main();`, tick **File System** in the gear menu next to Run, save it, then run it from the Scripts Library (right-click › Run Script). Issues and pull requests are welcome.
 
 ## Licence
 
